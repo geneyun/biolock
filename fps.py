@@ -4,12 +4,12 @@ import cryptography
 
 
 class FPS(object):
-    def __init__(self, port='COM3', baudrate=9600, timeout=5):
+    def __init__(self):
         self.ser = None
         self.open = False
 
-    def start(self,port='COM3', baudrate=9600, timeout=5):
-        self.ser= serial.Serial(port=port,baudrate=baudrate,timeout=timeout)
+    def start(self, port='COM3', baudrate=9600, timeout=5):
+        self.ser = serial.Serial(port=port, baudrate=baudrate, timeout=timeout)
 
         counter = 0
         while counter < 2:
@@ -19,7 +19,6 @@ class FPS(object):
                 self.open = True
                 break
             counter += 1
-
 
     def close(self):
         self.ser.write(b'y')
@@ -72,28 +71,6 @@ class FPS(object):
             n = self.ser.read()
             s = s + n
         return s
-
-    def identify2(self):
-        #generate keys
-        keys = cryptography.key_gen()
-        n = cryptography.to_bytes(keys[0])
-
-        self.ser.write(b'v')
-        #write n
-        for i in range(4):
-            self.ser.write(bytes([n[i]]))
-        #write e
-        self.ser.write(bytes([keys[1]]))
-        print self.ser.read()
-        print self.ser.read()
-        print self.ser.read()
-        print self.ser.read()
-        print self.ser.read()
-        # s = ''
-        # for i in range(32):
-        #     n = self.ser.read()
-        #     s = s + n
-        # return s
 
     def enroll_start(self):
         self.ser.write(b'q')

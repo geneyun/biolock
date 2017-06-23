@@ -6,7 +6,7 @@ class Entry:
         self.title = title
         self.username = username
         self.password = password
-
+        self.owner = None
 
     def print_values(self):
         print self.title, self.username, self.password
@@ -37,37 +37,36 @@ class Vault:
         s = s[:-1]
         return s
 
-    def lock(self,key):
+    def lock(self, key):
         # self.print_all()
         vault_path = self.vault_name + ".blvf"
         vault_file = open(vault_path, "w")
-        encrypted_vault = cryptography.encrypt('BioLockVault:'+self.to_string(),cryptography.hash(key))
+        encrypted_vault = cryptography.encrypt('BioLockVault:' + self.to_string(), cryptography.hash_password(key))
         vault_file.write(encrypted_vault)
         vault_file.close()
 
-    def try_unlock(self,key):
+    def try_unlock(self, key):
         vault_path = self.vault_name + ".blvf"
         vault_file = open(vault_path, "r")
         encrypted_vault = vault_file.read()
-        decrypted_vault = cryptography.decrypt(encrypted_vault,cryptography.hash(key))
+        decrypted_vault = cryptography.decrypt(encrypted_vault, cryptography.hash_password(key))
         vault_file.close()
         return decrypted_vault.startswith('BioLockVault:')
 
-    def unlock(self,key):
+    def unlock(self, key):
         vault_path = self.vault_name + ".blvf"
         vault_file = open(vault_path, "r")
         encrypted_vault = vault_file.read()
-        decrypted_vault = cryptography.decrypt(encrypted_vault,cryptography.hash(key))
+        decrypted_vault = cryptography.decrypt(encrypted_vault, cryptography.hash_password(key))
         vault_file.close()
         entry_list = decrypted_vault[13:].split(";")
 
-        if len(entry_list)>0:
-            if len(entry_list[0])>0:
+        if len(entry_list) > 0:
+            if len(entry_list[0]) > 0:
                 for entry in entry_list:
                     components = entry.split(",")
                     new_entry = Entry(components[0], components[1], components[2])
                     self.entry_list.append(new_entry)
-        # print [entry for entry in self.entry_list]
 
     def update_name(self, new_name):
         self.vault_name = new_name
