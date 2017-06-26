@@ -9,8 +9,10 @@ class FPS(object):
         self.open = False
 
     def start(self, port='COM3', baudrate=9600, timeout=5):
+        # start a serial connection
         self.ser = serial.Serial(port=port, baudrate=baudrate, timeout=timeout)
 
+        # use an echo to determine if a connection has been established
         counter = 0
         while counter < 2:
             self.ser.write(b'!')
@@ -24,6 +26,10 @@ class FPS(object):
         self.ser.write(b'y')
         self.ser.close()
         self.open = False
+
+    # each method here writes a byte to the scanner corresponding to a scanner command.
+    # some of them send extra parameters, and some read the result from the scanner
+    # for a better understanding it is better to read the biolock.ino file first
 
     def led_on(self):
         self.ser.write(b'n')

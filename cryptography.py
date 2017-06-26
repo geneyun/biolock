@@ -2,24 +2,38 @@ from Crypto.Cipher import AES
 import base64
 import Tkinter as tk
 import hashlib
-import random
 
-def encrypt(privateInfo,key):
-    BLOCK_SIZE = 32
-    PADDING = '{'
-    pad = lambda s: s + (BLOCK_SIZE - len(s)%BLOCK_SIZE)*PADDING
+
+def encrypt(data, key):
+    """
+    :param data: a string to encrypt
+    :param key: a key
+    :return: encrypted string
+    """
+
+    # set block size
+    block_size = 32
+
+    # add padding
+    padding = '{'
+    pad = lambda s: s + (block_size - len(s) % block_size) * padding
+
+    # use base64 encoding
     encode_aes = lambda c, s: base64.b64encode(c.encrypt(pad(s)))
-    secret = key
-    cipher = AES.new(secret)
-    encoded = encode_aes(cipher, privateInfo)
+
+    # encrypt
+    cipher = AES.new(key)
+
+    # encode
+    encoded = encode_aes(cipher, data)
+
     return encoded
 
 
 def decrypt(encrypted_string, key):
-    PADDING = '{'
-    decode_aes = lambda c, e: c.decrypt(base64.b64decode(e)).rstrip(PADDING)
+    padding = '{'
     cipher = AES.new(key)
-    decoded = decode_aes(cipher, encrypted_string)
+    decoded = cipher.decrypt(base64.b64decode(encrypted_string)).rstrip(padding)
     return decoded
 
 

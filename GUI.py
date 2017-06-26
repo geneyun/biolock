@@ -110,19 +110,25 @@ class Welcome(tk.Frame):
         self.new_btn.pack(side=tk.TOP, pady=10)
 
     def login(self, md, root):
+        # enables the Enter Vault only if a device is connected
         if md.open:
             root.set_login('')
 
     def signup(self, md, root):
+        # enables the New Vault only if a device is connected
         if md.open:
             root.set_signup('')
 
 
 class ButtonBL(tk.Canvas):
+    """
+    A class used to create round-cornered buttons
+    """
     def __init__(self, root, bg, w=0, h=0, r=20, color='red', hover_color='blue', press_color='green',
                  command=lambda: None, text="", font="TkDefaultFont 30", fg="white", enabled=True):
         tk.Canvas.__init__(self, root, width=w, height=h, bg=bg, highlightthickness=0)
 
+        # set geometry
         self.button_parts = [
             self.create_arc(0, 0, r, r, start=90, extent=90),
             self.create_arc(w - r, 0, w, r, start=0, extent=90),
@@ -131,13 +137,16 @@ class ButtonBL(tk.Canvas):
             self.create_rectangle(r / 2, 0, w - r / 2, h),
             self.create_rectangle(0, r / 2, w, h - r / 2)
         ]
+        # set color and text
         self.set_color(color)
         self.create_text(w/2, h/2, font=font, text=text, fill=fg)
 
+        # set hover parameters and button function
         self.color, self.hover_color, self.press_color = color, hover_color, press_color
         self.command = command
         self.set_bindings()
 
+        # allow button disabling
         self.enabled = True
         if not enabled:
             self.disable()
@@ -173,23 +182,33 @@ class SignUp(tk.Frame):
     def __init__(self, root, mv, md):
         tk.Frame.__init__(self, root, bg="#bbeaff")
 
-        self.logoImg = tk.PhotoImage(file="graphics/biolock.gif")
-        self.logo = tk.Label(self, image=self.logoImg, bg="#bbeaff")
+        # set logos
+        self.logo_img = tk.PhotoImage(file="graphics/biolock.gif")
+        self.logo = tk.Label(self, image=self.logo_img, bg="#bbeaff")
+
+        # set a frame, an entry, a label, a string variable, and a create button
         self.f1 = tk.Frame(self, bg="#bbeaff")
         self.e1 = tk.Entry(self.f1, font="TkDefaultFont 18")
         self.t1 = tk.Label(self.f1, text="Vault Name: ", font="TkDefaultFont 18", bg="#bbeaff", justify="left")
         self.var = tk.IntVar()
-        self.createBtn = ButtonBL(self, bg="#bbeaff", w=200, h=50, r=50, color="#00afff", hover_color="#5ab7e2",
-                                  press_color="#97d8f6", command=lambda x: self.go_entry(md), text="Create Vault",
-                                  font="TkDefaultFont 20")
-        self.homeImg = tk.PhotoImage(file="graphics/home.gif").subsample(2, 2)
-        self.homeBtn = ButtonBL(self, bg="#bbeaff", w=70, h=70, r=20, color="#00afff", hover_color="#5ab7e2",
-                                press_color="#97d8f6", command=root.set_welcome)
-        self.homeBtn.create_image(35, 35, image=self.homeImg)
+        self.create_btn = ButtonBL(self, bg="#bbeaff", w=200, h=50, r=50, color="#00afff", hover_color="#5ab7e2",
+                                   press_color="#97d8f6", command=lambda x: self.go_entry(md), text="Create Vault",
+                                   font="TkDefaultFont 20")
+
+        # set home button
+        self.home_img = tk.PhotoImage(file="graphics/home.gif").subsample(2, 2)
+        self.home_btn = ButtonBL(self, bg="#bbeaff", w=70, h=70, r=20, color="#00afff", hover_color="#5ab7e2",
+                                 press_color="#97d8f6", command=root.set_welcome)
+        self.home_btn.create_image(35, 35, image=self.home_img)
+
+        # set a status label
         self.f2 = tk.Frame(self, bg="#bbeaff")
         self.label = tk.Label(self.f2, text='Enter Vault name', bg="#bbeaff", font="TkDefaultFont 20")
 
     def pack(self, **kwargs):
+        """
+        pack screen
+        """
         tk.Frame.pack(self, **kwargs)
         self.logo.pack(side=tk.TOP, pady=(150, 0))
         self.f1.pack(pady=(90, 0))
@@ -197,12 +216,16 @@ class SignUp(tk.Frame):
         self.e1.pack(side=tk.RIGHT)
         self.f2.pack()
         self.label.pack()
-        self.createBtn.pack(pady=(20, 0))
-        self.homeBtn.pack(anchor=tk.SW, side=tk.BOTTOM, padx=(10, 0), pady=(0, 10))
+        self.create_btn.pack(pady=(20, 0))
+        self.home_btn.pack(anchor=tk.SW, side=tk.BOTTOM, padx=(10, 0), pady=(0, 10))
 
     def go_entry(self, md):
+        # this runs when the user presses the create vault button.
+        # first, the input goes to user_input
         user_input = self.e1.get()
+        # then it checks if the input is valid
         if self.valid_input(user_input):
+            # here it checks if such a file doesn't already exist
             if user_input not in [f[:-5] for f in os.listdir(os.getcwd()) if f.endswith('.blvf')]:
                 self.label.config(text='Please press finger')
                 self.label.update()
@@ -210,10 +233,14 @@ class SignUp(tk.Frame):
                 while not md.is_press_finger():
                     time.sleep(0.5)
                 exists = md.exists()
+                # if the user is already in the scanner, no enrollment is needed
                 if exists:
                     self.label.config(text='Finger is already scanned. Vault created.')
                     self.use_key(md)
+                # if this is a new finger an enrollment is required
                 else:
+                    # this will get the user through a sequence of pressing and removing his finger
+                    # each time it calls the necessary functions to enroll the finger
                     self.label.config(text='Remove finger')
                     self.label.update()
                     while md.is_press_finger():
@@ -243,6 +270,8 @@ class SignUp(tk.Frame):
                         time.sleep(0.5)
                     time.sleep(0.5)
                     successful = md.enroll3()
+                    # if the enrollment was successful,
+                    # it will create a new vault with the code it gets from the scanner
                     if successful:
                         self.use_key(md)
                         self.label.config(text='Remove finger')
@@ -263,6 +292,7 @@ class SignUp(tk.Frame):
             self.label.update()
 
     def use_key(self, md):
+        # create a new vault with the code from the scanner
         user_input = self.e1.get()
         new_vault = vault_manager.Vault([], user_input)
         s = md.identify()
@@ -270,6 +300,7 @@ class SignUp(tk.Frame):
         new_vault.key = s
 
     def valid_input(self, user_input):
+        # check that the input has at least one character and does not use illegal file-name characters
         for c in user_input:
             if c in '\/*?"<>|':
                 return False
@@ -279,8 +310,8 @@ class SignUp(tk.Frame):
 class Login(tk.Frame):
     def __init__(self, root, mv, md):
         tk.Frame.__init__(self, root, bg="#bbeaff")
-        self.logoImg = tk.PhotoImage(file="graphics/biolock.gif")
-        self.logo = tk.Label(self, image=self.logoImg, bg="#bbeaff")
+        self.logo_img = tk.PhotoImage(file="graphics/biolock.gif")
+        self.logo = tk.Label(self, image=self.logo_img, bg="#bbeaff")
         self.f1 = tk.Frame(self, bg="#bbeaff")
         self.str = tk.StringVar()
         self.str.set("Choose Vault")
@@ -315,19 +346,29 @@ class Login(tk.Frame):
         self.home_btn.pack(anchor=tk.SW, side=tk.BOTTOM, padx=(10, 0), pady=(0, 10))
 
     def verify(self, root, mv, md):
+        # this checks if the user can access the vault
+
         user_input = self.menu.get()
+
+        # check if the input is valid
         if user_input in [f[:-5] for f in os.listdir(os.getcwd()) if f.endswith('.blvf')]:
+            # open file
             vault_path = user_input + ".blvf"
             vault_file = open(vault_path, "r")
+
+            # scan
             self.label.config(text='Please press finger')
             self.label.update()
             md.led_on()
             while not md.is_press_finger():
                 time.sleep(0.5)
             v = md.identify()
+
+            # update main vault name, use code from scanner as key
             mv.update_name(user_input)
             mv.key = v
             if mv.try_unlock(v):
+                # if the key is valid, open vault
                 mv.unlock(v)
                 root.vault_screen.make_tree(mv)
                 root.set_vault()
@@ -380,6 +421,7 @@ class Connect(tk.Frame):
         self.home_button.pack(anchor=tk.SW, side=tk.BOTTOM, padx=(10, 0), pady=(0, 10))
 
     def serial_ports(self):
+        # this lists the available serial ports
         if sys.platform.startswith('win'):
             ports = ['COM%s' % (i + 1) for i in range(256)]
         elif sys.platform.startswith('linux') or sys.platform.startswith('cygwin'):
@@ -399,11 +441,15 @@ class Connect(tk.Frame):
         return result
 
     def ok(self, md):
+        # this connects to the device, if all conditions are satisfied
+        # this make sure the user doesn't try to connect twice
         if not self.connected:
+            # this checks that the user doesn't try to connect before choosing a port
             p = self.menu.get()
             if p == 'Choose port':
                 self.label.config(text='Choose a port before trying to connect')
                 self.label.update()
+            # this checks that the user doesn't play with the input
             elif p in self.serial_ports():
                 self.label.config(text='connecting to: ' + p)
                 self.label.update()

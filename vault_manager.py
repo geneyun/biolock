@@ -8,9 +8,6 @@ class Entry:
         self.password = password
         self.owner = None
 
-    def print_values(self):
-        print self.title, self.username, self.password
-
     def compare_entry(self, entry):
         return self.title == entry.title and self.username == entry.username and self.password == entry.password
 
@@ -26,11 +23,9 @@ class Vault:
         self.vault_name = vault_name
         self.key = None
 
-    def print_all(self):
-        for entry in self.entry_list:
-            entry.print_values()
-
     def to_string(self):
+        # turns a vault into a string, so it can be encrypted
+        # format is: title,username,password; for each entry
         s = ""
         for entry in self.entry_list:
             s = s + entry.title + "," + entry.username + "," + entry.password + ";"
@@ -38,29 +33,47 @@ class Vault:
         return s
 
     def lock(self, key):
-        # self.print_all()
+        # saves the changes made to the vault to an encrypted vault file
+
+        # open file
         vault_path = self.vault_name + ".blvf"
         vault_file = open(vault_path, "w")
+
+        # encrypt vault
         encrypted_vault = cryptography.encrypt('BioLockVault:' + self.to_string(), cryptography.hash_password(key))
+
+        # write to file and close it
         vault_file.write(encrypted_vault)
         vault_file.close()
 
     def try_unlock(self, key):
+        # this checks if the encryption worked, to avoid parsing of a non-formatted string
+        # each vault file starts with 'BioLockVault:', to check if the decryption was successful
+
+        # open file
         vault_path = self.vault_name + ".blvf"
         vault_file = open(vault_path, "r")
+
+        # read, decrypt, close
         encrypted_vault = vault_file.read()
         decrypted_vault = cryptography.decrypt(encrypted_vault, cryptography.hash_password(key))
         vault_file.close()
+
+        # if a vault after decryption starts with 'BioLockVault:', return true
         return decrypted_vault.startswith('BioLockVault:')
 
     def unlock(self, key):
+        # get data from file and decrypt it
         vault_path = self.vault_name + ".blvf"
         vault_file = open(vault_path, "r")
         encrypted_vault = vault_file.read()
         decrypted_vault = cryptography.decrypt(encrypted_vault, cryptography.hash_password(key))
         vault_file.close()
+
+        # slice the 'BioLockVault:' from the beginning and separate to entries
         entry_list = decrypted_vault[13:].split(";")
 
+        # read the file and insert the values to a vault
         if len(entry_list) > 0:
             if len(entry_list[0]) > 0:
                 for entry in entry_list:
